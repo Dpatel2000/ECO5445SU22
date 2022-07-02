@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jul  2 11:13:43 2022
+
+@author: darshanpatel
+"""
+
+v = 2
+type(v)
+
+w = 2.0
+type(w)
+
+x = 10j
+type(x)
+
+y = "2 Cool for School"
+type(y)
+
+z = True
+type(z)
+
+A = [v, w, x, y, z]
+print(A)
+
+B = "I like pie more than cake"
+print(B[0:6])
+
+print(B[7:15])
+
+print(B[16:25])
+
+print(B[0:6], B[11:15], B[21:25])
+
+
+def multiples(num):
+    if num % 15 == 0:
+            return "foobar"
+    elif num % 5 == 0:
+            return "bar"
+    elif num % 3 == 0:
+            return "foo"
+    else:
+            return "Not a multiple of 3, 5, or 15"
+        
+number = int(input("Please enter a number that is a multiple of 3, 5, or 15: "))
+
+print(multiples(number))
