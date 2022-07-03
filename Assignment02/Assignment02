@@ -44,6 +44,6 @@ def multiples(num):
     else:
             return "Not a multiple of 3, 5, or 15"
         
-number = int(input("Please enter a number that is a multiple of 3, 5, or 15: "))
+number = 240
 
 print(multiples(number))
