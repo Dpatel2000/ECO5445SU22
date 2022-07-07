@@ -43,7 +43,34 @@ def multiples(num):
             return "foo"
     else:
             return "Not a multiple of 3, 5, or 15"
+
+# Didn't didn't provide headers, description, or examples (-15)
+# Example: 
+
+# def foobar(value: int) -> str:
+    # """ 
+    # This function takes an integer and applies the following rules: 
+    # * If it is a multiple of 3 return the string "foo"
+    # * If it is a multiple of 5 return the string "bar"
+    # * If it is a multiple of 15 return the string "foobar"
+    # * If it does not satisfy any of those, return the string "Not a multiple of 3, 5, or 15"
+    # >>> foobar(9)
+    # "foo"
+    # >>> foobar(10)
+    # "bar"
+    # >>> foobar(45)
+    # "foobar"
+    # >>> foobar(19)
+    # "Not a multiple of 3, 5, or 15"   
+    # """
         
 number = 240
 
 print(multiples(number))
+
+# Provided one test. Inputting a string breaks code (-5)
+multiples(10)
+multiples("cat")
+multiples(90)
+multiples(27)
+multiples(101)
