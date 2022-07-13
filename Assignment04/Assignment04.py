@@ -20,7 +20,7 @@ for n in range(NumberofTrials):
     x = Xcoordinate[n]
     y = Ycoordinate[n]
     
-    if x**2 + y**2 <= Radius**2:
+    if np.sqrt(x**2 + y**2) <= Radius: # Oddly enough, sqare root is more precise than power
         Center = Center + 1
         
 area = 4*Center/NumberofTrials
