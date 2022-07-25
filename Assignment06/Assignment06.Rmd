@@ -1,0 +1,126 @@
+---
+title: "Assignment 6"
+author: "Darshan Patel"
+date: '2022-07-24'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+# Add any packages you want in this chunk:
+library("olsrr")
+```
+
+We are going to look at the property prices for Orange County. From there we are going to try and predict the sales price by linear regression.
+
+# Importing Data 
+
+Bring in the data and make sure the data types are correct. If not, make the proper changes. The file is located within this project. *data/prop_prices_reduced.csv*
+
+```{r}
+data <- read.csv("/Users/darshanpatel/Documents/GitHub/ECO5445SU22/Assignment06/data/prop_prices_reduced.csv", header = TRUE, stringsAsFactors = FALSE)
+```
+
+
+# Plotting
+
+Plot histograms for all variables. Additionally, add scatterplots for the relationships between all quantitative variables.
+
+```{r}
+hist(data$sale_def)
+hist(data$bed)
+hist(data$bath)
+hist(data$area_heated)
+hist(data$area)
+hist(data$dist_cbd)
+hist(data$dist_lakes)
+hist(data$pool)
+
+plot(data$area_heated, data$sale_def)
+plot(data$area, data$sale_def)
+plot(data$dist_cbd, data$sale_def)
+plot(data$dist_lakes, data$sale_def)
+plot(data$area_heated, data$area)
+plot(data$dist_cbd, data$area)
+plot(data$dist_lakes, data$area)
+
+```
+
+# Summary Statistics
+
+Provide basic summary statistics for univariate analysis. Also, provide the correlation between all the quantitative variables.
+
+```{r}
+summary(data)
+
+cor(data$area_heated, data$sale_def)
+cor(data$area, data$sale_def)
+cor(data$dist_cbd, data$sale_def)
+cor(data$dist_lakes, data$sale_def)
+cor(data$area_heated, data$area)
+cor(data$dist_cbd, data$area)
+cor(data$dist_lakes, data$area)
+
+```
+
+# Regression Analysis
+
+Run a regression with all the variables included. Print results of the regression.
+
+```{r}
+Model <- lm(data$sale_def ~ data$bed + data$bath + data$area_heated + data$area + data$dist_cbd + data$dist_lakes + data$pool)
+
+print(Model)
+
+summary(Model)
+
+```
+
+Which of the variables tested significant at the 95% level? Looking at the results and answering outside of the chunk is sufficient.
+
+## Based on the summary statistics of the linear regression, the variables that tested significant at the 95% confidence level are the pool and bed independent variables since their p value is .05, which equates to a 95% confidence level.
+
+## Evaluating the model
+
+As is, are any of the Gauss-Markov assumptions violated? If so, which ones? How can you fix the issues?
+
+```{r}
+ols_vif_tol(Model)
+# based on the VIF factor, multicollinearity does not seem to be an issue in regards to the assumptions.
+#Assuming no other assumptions are violated since random disturbance is unknown and other assumptions rely on random disturbance
+
+```
+
+## New Model
+
+Based off of your findings in the previous section, make changes to the variables, the functional form, etc.
+
+```{r}
+# No changes to be made.
+```
+
+
+# Prediction
+
+Based on the following inputs, predict the deflated sales price:
+
+- 2 bed
+- 2 bath
+- area_heated = 1223
+- area = 9750
+- dist_cbd = 19368
+- dist_lakes = 490
+- no pool
+
+```{r}
+Price = (-8.492e+04*2) + (5.449e+04*2) + (2.439e+02*1223) + (3.548e+00*9750) + (-5.848e+00*19368) + (9.651e-01*490) + (-2.776e+04*0)
+
+print(Price)
+```
