@@ -1,0 +1,74 @@
+---
+title: "Assignment07"
+author: "Darshan Patel"
+date: '2022-07-31'
+output: html_document
+---
+```{r setup, include=FALSE}
+
+```
+
+
+```{r}
+#Instruction 1
+data <- read.csv("/Users/darshanpatel/Documents/GitHub/ECO5445SU22/Assignment06/data/prop_prices_reduced.csv", header = TRUE, stringsAsFactors = FALSE)
+
+library(dplyr)
+library(glmnet)
+library(caret)
+library(gamlr)
+```
+
+
+```{r}
+#Instruction 2
+Model <- lm(data$sale_def ~ data$bed + data$bath + data$area_heated + data$area + data$dist_cbd + data$dist_lakes + data$pool)
+predict(Model, Traindata)
+
+```
+
+
+```{r}
+#Instruction 3
+y <- Traindata$sale_def
+x <- data.matrix(Traindata[, c('bed', 'bath', 'area_heated', 'area', 'dist_cbd', 'dist_lakes', 'pool')])
+
+Lasso <- cv.glmnet(x, y, alpha = 1)
+plot(Lasso)
+```
+
+```{r}
+#Instruction 4
+validation <- trainControl(method = "cv", number = 10)
+
+cross_val <- train(sale_def ~ bed + bath + area_heated + area + dist_cbd + dist_lakes + pool, data = Traindata, method = "lm", trControl = validation)
+
+print(cross_val)
+```
+
+```{r}
+#Instruction 5
+
+xx <- data.matrix(Testdata[, c('bed', 'bath', 'area_heated', 'area', 'dist_cbd', 'dist_lakes', 'pool')])
+yy <- Testdata$sale_def
+TestLasso <- cv.glmnet(xx, yy, alpha = 1)
+
+Lasso_Test <- gamlr(xx, log(yy), verb = TRUE)
+summary(Lasso_Test)
+
+log(Lasso_Test$lambda[which.min(AICc(Lasso_Test))])
+log(Lasso_Test$lambda[which.min(AIC(Lasso_Test))])
+log(Lasso_Test$lambda[which.min(BIC(Lasso_Test))])
+log(TestLasso$lambda.min)
+log(TestLasso$lambda.1se)
+
+min(AICc(Lasso_Test))
+min(AIC(Lasso_Test))
+min(BIC(Lasso_Test))
+TestLasso$lambda.min
+TestLasso$lambda.1se
+
+##Despite the BIC, AIC, and AICc methods all showing the same log lambdas, if we look at the minimum values for each of the lambda methods individually, then we will find that the BIC method performed the best since it has the lowest value. The lower the value, the better the model fit, which shows that BIC is the best method since it yielded the lowest value out of all the lambda methods. 
+
+```
+
