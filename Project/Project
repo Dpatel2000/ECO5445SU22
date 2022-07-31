@@ -1,10 +1,14 @@
-#!/usr/bin/env python3
+it_path = 'C:/Users/jo585802/OneDrive - University of Central Florida/Documents/GitHub/ECO5445/' # Needed line to test data#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Sat Jul 16 11:27:01 2022
 
 @author: darshanpatel
 """
+###############################################################################
+# Copy header formatting from my scripts
+# Script does not have the .py extension
+###############################################################################
 
 #Instruction 3:
 
@@ -12,32 +16,62 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-data = pd.read_csv(r'/Users/darshanpatel/Documents/GitHub/ECO5445/Project/Data/hmda_sw.csv')
+#data = pd.read_csv(r'/Users/darshanpatel/Documents/GitHub/ECO5445/Project/Data/hmda_sw.csv')
+data = pd.read_csv('C:/Users/jo585802/OneDrive - University of Central Florida/Documents/GitHub/ECO5445/Project/Data/hmda_sw.csv') # Needed line to test data
 print(data)
 
 new_data = data.copy()
 new_data = new_data.rename(columns = {"s3" : "Type", "s4" : "Purpose", "s5" : "Occupancy", "s6" : "Amt in thsds", "s7" : "Action/Result", "s9" : "MSA #", "s11" : "County", "s13" : "Race", "s14" : "Co-Race", "s15" : "Sex", "s16" : "Co-Sex", "s17" : "Income", "s18" : "Purchaser Type", "s19a" : "Denial Code", "s19b" : "Den Code 2", "s19c" : "Den Code 3", "s19d" : "Den Code 4", "s20" : "Units Purchased", "s23a" : "Marital #", "s24a" : "# of Dependents", "s25a" : "Yrs on Field", "s26a" : "Yrs on Job", "s27a" : "Self-Emp #", "s30a" : "Base monthly income", "s30c" : "Co-Base Monthly Income", "s31a" : "Total Monthly Income", "s31c" : "Co-Total Monthly Income", "s32" : "Monthly Exp", "s33" : "Purch Price", "s34" : "Other Financing", "s35" : "Liquid Assets", "s39" : "# of Credit Reports", "s40" : "Credit Check", "s41" : "# of Credit Lines", "s42" : "Mortgage Pmts", "s43" : "Consumer Pmts", "s44" : "Public Records", "s45" : "Housing Debt to Income", "s46" : "Total Debt to Income", "s47" : "Loan Rate Type", "s48" : "Loan Terms in Months", "s49" : "Loan Program", "s50" : "Appraised Value Thsnds", "s51" : "Property Type", "s52" : "PMI Sought", "s53" : "PMI denied", "s54" : "Dwn Pmt from Gift/Grant", "s55" : "Cosigner", "s56" : "Unverifiable Info", "s57" : "Times App Reviewed by Underwriter", "netw" : "Net Worth", "uria" : "Probability of Unemployement by Industry", "rtdum" : "Minority Share", "bd" : "Board Up Value", "mi" : "Median Income", "old" : "Applicant Age", "vr" : "Tract Vacancy", "school" : "Years of Education", "chval" : "Median Value Chg", "dnotown" : "Owner Occupied", "dprop" : "Property Type"})
 print(new_data)
 
+
 #The qualitative dependent variable I will use is the "Type of action taken" from the "S7" Column
 #The co-variates that I will use in this model include debt-to-income ratios, race, self-employment, marital status, education, Monthly income of the applicant, Purchase Price of House, Credit history meeting loan policy, Credit History for mortgage and consumer payments and public records, Term of the loan in months, and Net Worth
 
+###############################################################################
+# Why did you choose these variables in particular? What information from the
+# paper helped you decide?
+###############################################################################
+
+###############################################################################
+# Didn't happen to notice that 999,999.4 is the designation for missing 
+# numerical data. Summary statistics will be skewed.
+###############################################################################
+
+###############################################################################
+# The categorical variables are currently being treated as numeric. You cannot
+# do mean, sd, etc.
+###############################################################################
 
 #Instruction 4:
     
 moddatasummary = new_data[['Action/Result', 'Total Debt to Income', 'Housing Debt to Income', 'Race', 'Self-Emp #', 'Marital #', 'Total Monthly Income', 'Purch Price', 'Credit Check', 'Mortgage Pmts', 'Consumer Pmts', 'Public Records', 'Loan Terms in Months', "Net Worth"]].describe()
 print(moddatasummary)
 
+###############################################################################
+# Missed spread of data using standard deviation or variance
+###############################################################################
+
 plt.hist(moddatasummary['Net Worth'], bins = 3, range = (0,30000))
 plt.hist(moddatasummary['Total Monthly Income'], bins = 10, range = (0,10000))
 plt.hist(moddatasummary['Purch Price'], bins = 10, range = (0,400))
 plt.hist(moddatasummary['Loan Terms in Months'], bins = 12, range = (0,360))
+
+###############################################################################
+# These plots do not provide details about what we are plotting
+# They need context in order to understand.
+###############################################################################
 
 #Based on the summary statistics, the average applicant gets approved for loans based on the mean of 1.268 from the Action/Result statistic.
 #In order to get approved for the loan, the applicant must have, on average, a Total Debt to income ratio of 33.08, Housing Debt to Income ratio of 25.534, have credit that meets loan policy, have no mortgage payment history, have one or two "slow pay" accounts for consumer payments, and have no public record defaults or have filed for bankruptcy.
 #Moreover, the average applicant is White since the Race mean is the closest to the White Value and is not self employed based on the survey statistics.
 #Some variables that have some outliers that skew the means are Total monthly income, Purchase Price of House, Loan Terms, and Net Worth of Applicant
 #Based on the histgrams of Each of the outliers given above, for Approval of a loan, the average applicant has a net worth of between 0 - 10000 dollars, Total monthly income between 2000-6000 dollars, the Purchase Prices of loans were about 125,000 - 160,000 dollars, the loan terms in months on average is 360 months when taking removing outliers.
+
+###############################################################################
+# Missed scatterplots and correlation
+###############################################################################
+
 
 #Instruction 5:
     
@@ -51,6 +85,9 @@ print(Approval)
 
 #85.0840% chance of getting approved for mortgage based on Index 1, which signifies Mortgage Approval.
 
+###############################################################################
+# Was there a reason not to include application approved, but not accepted?
+###############################################################################
 
 #Instruction 6
 
