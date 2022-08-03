@@ -25,7 +25,9 @@ We are going to look at the property prices for Orange County. From there we are
 Bring in the data and make sure the data types are correct. If not, make the proper changes. The file is located within this project. *data/prop_prices_reduced.csv*
 
 ```{r}
-data <- read.csv("/Users/darshanpatel/Documents/GitHub/ECO5445SU22/Assignment06/data/prop_prices_reduced.csv", header = TRUE, stringsAsFactors = FALSE)
+data <- read.csv("data/prop_prices_reduced.csv", header = TRUE, stringsAsFactors = FALSE)
+
+# Should convert pool to a factor (-2)
 ```
 
 
@@ -41,7 +43,7 @@ hist(data$area_heated)
 hist(data$area)
 hist(data$dist_cbd)
 hist(data$dist_lakes)
-hist(data$pool)
+# hist(data$pool) since pool is categorical, not quantitative cannot have proper histogram (-2)
 
 plot(data$area_heated, data$sale_def)
 plot(data$area, data$sale_def)
@@ -60,6 +62,8 @@ Provide basic summary statistics for univariate analysis. Also, provide the corr
 ```{r}
 summary(data)
 
+# What about spread? sd/variance (-5)
+
 cor(data$area_heated, data$sale_def)
 cor(data$area, data$sale_def)
 cor(data$dist_cbd, data$sale_def)
@@ -68,6 +72,7 @@ cor(data$area_heated, data$area)
 cor(data$dist_cbd, data$area)
 cor(data$dist_lakes, data$area)
 
+#cor(data[,-ncol(data)]) # instead of many lines
 ```
 
 # Regression Analysis
@@ -85,7 +90,10 @@ summary(Model)
 
 Which of the variables tested significant at the 95% level? Looking at the results and answering outside of the chunk is sufficient.
 
-## Based on the summary statistics of the linear regression, the variables that tested significant at the 95% confidence level are the pool and bed independent variables since their p value is .05, which equates to a 95% confidence level.
+Based on the summary statistics of the linear regression, the variables that tested significant at the 95% confidence level are the `pool` and bed independent variables since their p value is .05, which equates to a 95% confidence level.
+
+`pool did not test significant at the 95% level (-2)`
+`There are many other ones that tested significant (-8)`
 
 ## Evaluating the model
 
@@ -93,10 +101,12 @@ As is, are any of the Gauss-Markov assumptions violated? If so, which ones? How 
 
 ```{r}
 ols_vif_tol(Model)
-# based on the VIF factor, multicollinearity does not seem to be an issue in regards to the assumptions.
-#Assuming no other assumptions are violated since random disturbance is unknown and other assumptions rely on random disturbance
 
 ```
+
+based on the VIF factor, multicollinearity does not seem to be an issue in regards to the assumptions. Assuming no other assumptions are violated since random disturbance is unknown and other assumptions rely on random disturbance
+
+`Only checked one part of one of the Gauss-Markov assumptions (-22)`
 
 ## New Model
 
@@ -104,6 +114,8 @@ Based off of your findings in the previous section, make changes to the variable
 
 ```{r}
 # No changes to be made.
+
+# Many changes were needed (-10)
 ```
 
 
@@ -122,5 +134,9 @@ Based on the following inputs, predict the deflated sales price:
 ```{r}
 Price = (-8.492e+04*2) + (5.449e+04*2) + (2.439e+02*1223) + (3.548e+00*9750) + (-5.848e+00*19368) + (9.651e-01*490) + (-2.776e+04*0)
 
+# Careful with the "=" for assignment. It will cause issues in many places use " <-" instead (-1)
+
 print(Price)
+
+# Values were hard coded, you should use the predict function. Otherwise, you will need to manually type in values for each prediction. (-1)
 ```
