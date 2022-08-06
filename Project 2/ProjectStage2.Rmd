@@ -1,0 +1,501 @@
+---
+title: "Project Stage 2"
+author: "Darshan Patel"
+date: '2022-08-05'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages}
+library('moments')
+library('dplyr')
+library('plyr')
+library('pROC')
+library('InformationValue')
+library('gamlr')
+library('glmnet')
+library('randomForest')
+library('rpart')
+library('rpart.plot')
+library('e1071')
+library('party')
+
+```
+
+# Importing Data
+
+```{r}
+data <- read.csv("/Users/darshanpatel/Documents/GitHub/ECO5445SU22/Project 2/hmda_sw.csv", header = TRUE, stringsAsFactors = TRUE)
+
+```
+
+
+# Data Cleaning with Variable & Co-Variable Identification (A)
+ 
+The variables in the dataset do not have intuitive names (e.g., the meaning of S3 is unclear). Referencing the data description and the AER paper, identify the qualitative dependent that you will be modeling and the set of covariates that you intend to include in your various models, and rename the variables so that they have (somewhat) intuitive names. Be certain that the debt-to-income ratio and the race, self-employed, marital status, and education indicator variables are included, among other variables.
+
+```{r}
+
+Variables <- data[ , c("s7", "s46", "s13", "s27a", "s23a", "school", "s31a", "s33", "s40", "s42", "s6", "s48", "netw")]
+
+Names <- c("Result", "Total_DTI", "Race", "Self_Employment", "Marital", "Years_of_Education", "Total_Monthly_Income", "Purchase_Price", "Credit_Check", "Mortgage_Payments", "Loan_Amount", "Loan_Term", "Net_Worth")
+
+colnames(Variables) <- Names
+
+Variables[Variables == 999999.4] <- NA
+Variables[Variables == 999999] <- NA
+
+Finalvar <- na.omit(Variables)
+
+Finalvar$Result <- factor(Finalvar$Result, levels = c(1,2,3), labels = c("Approved","Approved","Denied"))
+Finalvar$Race <- factor(Finalvar$Race, levels = c(3,5), labels = c("Black", "White"))
+Finalvar$Self_Employment <- factor(Finalvar$`Self_Employment`, levels = c(0, 1), labels = c("No", "Yes"))
+Finalvar$`Marital` <- factor(Finalvar$Marital, c("M", "U", "S"), labels = c("Married", "Single", "Separate"))
+Finalvar$Credit_Check <- factor(Finalvar$`Credit_Check`, levels = c(0,1), c("Fail", "Pass"))
+Finalvar$Mortgage_Payments <- factor(Finalvar$Mortgage_Payments, levels = c(1,2,3,4), c ("Not late", "No History", "1-2 Late pmts", "2+ late pmts"))
+
+```
+
+## Explanation of Variables
+- The qualitative dependent variable I will use is the "Type of action taken" from the "S7" Column.
+- The co-variates that I will use in this model include Total debt-to-income ratio, Race, Self-employment, Marital status, Education, Monthly income of the applicant, Purchase Price of House, Credit history meeting loan policy, Credit History for mortgage payments, Loan amount, Term of the loan in months, and Net Worth.
+- Data that skewed our results have been removed. In this case, the values of 999999 and 999999.4 were removed
+- Moreover, data with integers that represent characteristics (ex: 3 = "Black" under "Race") have been changed to reflect those characteristics
+- Along with the standard DTI, race, self employed, marital status, and education variables stated in the instructions, I decided to also include Purchase Price and Loan amount because the amount an applicant wants to buy a house for affects how much money they would need to borrow from a loan. Moreover, I also chose Net worth, total monthly income, and loan term because I figured that one's level of monetary stability would indicate more or less risk to loaner in giving them money, which would affect the amount and likelihood of getting approved. Also, the more stable one's finances are, the more comfortable the bank would allow for a longer loan term. Lastly, I chose Credit check and history for mortgage payments because the applicant's credit history is always checked before a bank decies to give a loan and usually credit history indicates how likely the bank is going to recover the money they loan out. 
+
+
+# Summary Statistics (B)
+
+Generate summary statistics on the set of variables selected in A, and explain the composition of the sample and of the characteristics of an average (representative) applicant. In the process, you should also generate and histograms and frequency counts on particular variables of interest, which can be referenced in your explanation of the composition of the sample and of a representative applicant.
+
+```{r}
+sum <- summary(Finalvar)
+print(sum)
+
+hist(Finalvar$`Net_Worth`, main = "Net Worth")
+hist(Finalvar$`Total_Monthly_Income`, main = "Total Monthly Income")
+hist(Finalvar$`Purchase_Price`, main = "Purchase Price")
+hist(Finalvar$`Loan_Term`, main = "Loan Term")
+hist(Finalvar$Loan_Amount, main = "Loan Amount")
+hist(Finalvar$Years_of_Education, main = "Years of Education")
+
+sd(Finalvar$`Net_Worth`, na.rm = TRUE)
+sd(Finalvar$`Total_Monthly_Income`, na.rm = TRUE)
+sd(Finalvar$`Purchase_Price`, na.rm = TRUE)
+sd(Finalvar$`Loan_Term`, na.rm = TRUE)
+sd(Finalvar$Loan_Amount, na.rm = TRUE)
+sd(Finalvar$Years_of_Education)
+
+
+
+```
+
+## Explanation
+- Based on the summary statistics, the average applicant gets approved for loans based on the mean of 1.268 from the Action/Result statistic.
+- Looking at the quantitative characteristics, the average applicant has a Total Debt to Income ratio of 33.08, has 15.5 years of education, has a monthly income of 4,917, is looking to purchase a house for around 190,200 dollars, applying for 139,300 dollars in loans with 343 months, and has a net worth of 249.82.
+- When looking at the Standard deviations of each qualitative characteristic, most of them are particularly high. The SD of Net worth is 1065.48 dollars, 5158. 82 dollars for Monthly income, and 130,000 dollars for Purchase Price of houses. This shows that individual wealth distribution is relatively uneven due to these large deviations.  Moreover, the deviations in house prices signify that the market value is high due to the large jumps in price.  Moreover, the standard deviation of Loan terms is about 63 months (5 years), 82,000 dollars for loan amount, and 3 years for education.  The loan term and amount deviations are relatively high due in part to the large deviations in purchase prices of houses and the large deviations net worth and monthly income. Lastly, the standard deviation for years of education is low which, in combination with the average 15.5 years, means that the average applicant has at minimum 12 years of education and max 18 years.
+- As for qualitative characteristics, the average applicant is White, not self-employed, is married, passes credit check in regards to loan policy, and has no mortgage history or no late mortage payments. 
+
+# Logistic Regression with Statistics (C)
+
+With the full sample, estimate the logistic regression model, where the deny/approve dummy variable is the response variable and the debt-to-income ratio and the race, self-employed, marital status, and education indicator variables are the co-variates. Graph the ROC curve and calculate the AUC. Also, compute the confusion matrix at alternative cut-off levels, and calculate the classifier sensitivity, specificity, the false-positive rate, the false-negative rate, the model accuracy and error rate to confirm they are the same as those produced by R. Provide a written explanation summarizing the findings.
+
+## Base Logistic Model
+
+```{r}
+
+basemod <- glm(Result ~ ., data = Finalvar, family = "binomial")
+
+summary(basemod)
+coef(basemod)
+
+```
+## Training Logistic Model
+```{r}
+set.seed(5)
+
+training <- sample(nrow(Finalvar), 0.7 * nrow(Finalvar))
+
+train_var <- Finalvar[training, ]
+train_val <- Finalvar[-training, ]
+
+table(train_var$Result)
+summary(train_val$Result)
+
+```
+
+## Fitting Logistic Model
+```{r}
+fitmod <- glm(Result ~ ., data = train_var, family = "binomial")
+summary(fitmod)
+```
+
+
+## ROC & AUC calculations
+ 
+```{r}
+prediction <- predict(fitmod, train_val, type = "response")
+
+ROC <- roc(train_val$Result ~ prediction, plot = TRUE, print.auc = TRUE)
+
+auc(ROC)
+
+
+```
+
+
+## Confusion Matrix at Various Cutoff Levels
+
+Cutoff = 25%
+
+```{r}
+cutoff_one <- factor(prediction > 0.25, levels = c(FALSE, TRUE), labels = c("Approved", "Denied"))
+
+cutoff <- table(train_val$Result, cutoff_one, dnn = c("Actual", "Predicted"))
+cutoff
+
+```
+
+Cutoff = 50%
+```{r}
+cutoff_two <- factor(prediction > 0.50, levels = c(FALSE, TRUE), labels = c("Approved", "Denied"))
+
+sec_cutoff <- table(train_val$Result, cutoff_two, dnn = c("Actual", "Predicted"))
+sec_cutoff
+```
+
+Cutoff = 75%
+
+```{r}
+cutoff_three <- factor(prediction > 0.75, levels = c(FALSE, TRUE), labels = c("Approved", "Denied"))
+
+third_cutoff <- table(train_val$Result, cutoff_three, dnn = c("Actual", "Predicted"))
+third_cutoff
+```
+
+Cutoff = 10%
+```{r}
+cutoff_four <- factor(prediction > 0.10, levels = c(FALSE, TRUE), labels = c("Approved", "Denied"))
+
+fourth_cutoff <- table(train_val$Result, cutoff_four, dnn = c("Actual", "Predicted"))
+third_cutoff
+```
+
+
+Optimal Cutoff Level
+```{r}
+Optimal <- ROC$thresholds[which.max(ROC$sensitivities + ROC$specificities)]
+
+optcut <- factor(prediction > Optimal, levels = c(FALSE, TRUE), labels = c("Approved", "Denied"))  
+
+Optimal_Cut <- table(train_val$Result, optcut, dnn = c("Actual", "Predicted"))
+Optimal_Cut
+```
+
+
+## Sensitivity & Specificity
+
+
+```{r}
+performance <- function(table, n = 4){
+  if(!all(dim(table) == c(2,2)))
+    stop("Must be a 2 x 2 table")
+  tn = table[1,1]
+  fp = table[1,2]
+  fn = table[2,1]
+  tp = table[2,2]
+  sensitivity = tp/(tp+fn)
+  specificity = tn/(tn+fp)
+  ppp = tp/(tp+fp)
+  npp = tn/(tn+fp)
+  hitrate = (tp+tn)/(tp+tn+fp+fn)
+  result <- paste0("Sensitivity = ", round(sensitivity,n),
+                   "\nSpecificity = ",round(specificity,n),
+                   "\nPositive Predictive Value = ", round(ppp,n),
+                   "\nNegative Predictive Value = ", round(npp,n),
+                   "\nAccuracy = ", round(hitrate,n))
+  cat(result)
+}
+
+```
+
+```{r}
+performance(cutoff)
+
+performance(sec_cutoff)
+
+performance(third_cutoff)
+
+performance(fourth_cutoff)
+
+performance(Optimal_Cut)
+
+```
+
+## Findings
+- Based on the Accuracy Scores, the second cutoff at 50% yielded the highest accuracy score out of the cutoffs tested.
+- Based on sensitivity and specificity scores, the optimal cutoff yielded the highest specificity and sensitivity scores at 0.9149 and 0.7174 respectively. This was expected since the optimal cutoff was found based on the maximum sensitivity and specificity scores.
+- As a result of these findings, the second cutoff at 50% will be the best measure since it is the most accurate based on its score.
+
+
+# Lasso Cross-Validation & Table (D)
+
+Next, using 10-fold cross validation, estimate a variety of logistic regression models and evaluate their predictive performance across a range of threshold values in each case. The models can (should) include interaction variables and polynomial terms (e.g., quadratic and cubic variables). Of interest is identifying the model and threshold value that yield the smallest average test misclassification rate; however, you can also calculate model accuracy and the AUC. Document in a table the performance of the various models using the chosen performance measures.
+
+## Lasso Regression Model
+
+```{r}
+
+trainy <- data.matrix(na.omit(Finalvar$Result))
+trainx <- data.matrix(Finalvar[, c('Total_DTI', 'Race', 'Self_Employment', 'Marital', 'Years_of_Education')])
+Lass <- gamlr(trainx, as.factor(trainy), verb = FALSE, family = 'binomial')
+plot(Lass)
+
+```
+
+## 10-fold Cross Validation
+```{r}
+Lass.cv <- cv.gamlr(trainx, as.factor(trainy), verb = TRUE, nfold = 10)
+
+
+plot(Lass.cv)
+```
+
+## Alternative Models with Different Methods
+
+
+### Support Vector Machines
+```{r}
+set.seed(5)
+
+support <- svm(Result ~ ., data = train_var)
+
+support
+
+
+sup_predict <- predict(support, na.omit(train_val))
+
+sup_perform <- table(na.omit(train_val)$Result, sup_predict, dnn = c("Actual", "Predicted"))
+
+sup_perform
+
+```
+
+#### Performance of Support Vector Machines
+```{r}
+performance(sup_perform)
+```
+
+
+### Decision Tree
+```{r}
+set.seed(5)
+
+Tree <- rpart(Result ~ ., data = train_var, method = 'class', parms = list(split = 'information'))
+
+prp(Tree, type = 2, extra = 104, fallen.leaves = T)
+
+
+tree_predict <- predict(Tree, train_var, type = "class")
+tree_perform <- table(train_var$Result, tree_predict, dnn = c("Actual", "Predicted"))
+
+tree_perform
+
+```
+
+#### Performance of Decision Trees
+```{r}
+performance(tree_perform)
+```
+
+### Random Forests
+```{r}
+set.seed(5)
+
+fit.forest <- randomForest(Result ~ ., data = train_var, na.action = na.roughfix, importance = TRUE)
+
+fit.forest
+
+forest_predict <- predict(fit.forest, train_val, type = "response")
+forest_perform <- table(train_val$Result, forest_predict, dnn = c("Actual", "Predicted"))
+
+forest_perform
+
+```
+
+#### Performance of Random Forests
+```{r}
+performance(forest_perform)
+```
+
+### Conditional Trees
+```{r}
+set.seed(5)
+
+fit.ctree <- ctree(Result ~ ., data = train_var)
+
+plot(fit.ctree)
+
+ctree_predict <- predict(fit.ctree, train_var, type = "response")
+ctree_perform <- table(train_var$Result, ctree_predict, dnn = c("Actual", "Predicted"))
+
+ctree_perform
+```
+
+#### Performance of Conditional Trees
+```{r}
+performance(ctree_perform)
+```
+
+# Identifying Superior Model with New Estimates (E)
+
+Of the competing models that you estimated and thresholds that you evaluated, identify the superior model for classification purposes. Re-estimate the model with the full sample of data. Then, graph the ROC, calculate the AUC, and compute the confusion matrix at the threshold level associated with the minimum average test mis-classification rate . Calculate the classifier sensitivity and specificity, the false-positive rate, the false negative rate, the accuracy, and overall mis-classification rate. How well does your superior model perform relative to the model estimated in C? Explain. Note that to do so you will need to calculate the confusion matrix from the estimated model in C at the threshold level.
+
+
+
+## Picking the Superior Model
+Based on the performance of each model in the last part, the support vector machines has the greatest accuracy calculation at 92.46%.  This will be the superior model for classification purposes to find new threshold 
+
+## Finding Best Threshold under Support Vector Machines Model
+We will look at different cutoffs of the different models from Instruction D and measure their accuracy. This will determine the proper threshold to utilize in our re-estimations.
+
+Cutoff = 25%
+```{r}
+supcut1 <- factor(prediction > .25, levels = c(FALSE, TRUE), labels = "Approved", "Denied")
+
+sup.cut1 <- table(train_val$Result, supcut1, dnn = c("Actual", "Predicted"))
+sup.cut1
+```
+
+Cutoff = 50%
+```{r}
+supcut2 <- factor(prediction > .50, levels = c(FALSE, TRUE), labels = "Approved", "Denied")
+
+sup.cut2 <- table(train_val$Result, supcut2, dnn = c("Actual", "Predicted"))
+sup.cut2
+```
+
+Cutoff = 75%
+```{r}
+supcut3 <- factor(prediction > .75, levels = c(FALSE, TRUE), labels = "Approved", "Denied")
+
+sup.cut3 <- table(train_val$Result, supcut3, dnn = c("Actual", "Predicted"))
+sup.cut3
+```
+
+Cutoff = 30%
+```{r}
+supcut4 <- factor(prediction > .30, levels = c(FALSE, TRUE), labels = "Approved", "Denied")
+
+sup.cut4 <- table(train_val$Result, supcut4, dnn = c("Actual", "Predicted"))
+sup.cut4
+```
+
+Cutoff = 90%
+```{r}
+supcut5 <- factor(prediction > .90, levels = c(FALSE, TRUE), labels = "Approved", "Denied")
+
+sup.cut5 <- table(train_val$Result, supcut5, dnn = c("Actual", "Predicted"))
+sup.cut5
+```
+
+### Performance of Each Cutoff under Decision Trees
+```{r}
+performance(sup.cut1)
+
+performance(sup.cut2)
+
+performance(sup.cut3)
+
+performance(sup.cut4)
+
+performance(sup.cut5)
+
+```
+
+Based on these statistics, once again, the best threshold to use is 50% as it has the highest accuracy at 92.03%
+
+## Re-estimating Model with Full Sample Data
+```{r}
+
+fullpredict <- predict(fitmod, Finalvar, type = "response")
+
+fullpredict50 <- factor (fullpredict > .50, levels = c (FALSE, TRUE), labels = c("Approved", "Denied"))
+
+fullperform50 <- table(Finalvar$Result, fullpredict50, dnn = c("Actual", "Predicted"))
+
+```
+
+
+## Re-Estimated ROC & AUC
+```{r}
+full_roc <- roc(Finalvar$Result ~ fullpredict, plot = TRUE, print.auc = TRUE)
+
+auc(full_roc)
+```
+
+## Confusion Matrix
+```{r}
+fullperform50
+
+```
+
+## Sensitivity, Specificity, & Accuracy
+```{r}
+performance(fullperform50)
+```
+
+## Model Comparsion
+In the following section, we will display statistics comparing the original model from instruction C & and superior model in this instruction.
+
+### ROC & AUC comparison
+
+Original Model
+```{r}
+plot(ROC, print.auc = TRUE)
+auc(ROC)
+```
+
+Superior Model
+```{r}
+plot(full_roc, print.auc = TRUE)
+auc(full_roc)
+```
+
+
+### Comparison of Confusion Matrix
+
+Original Model
+```{r}
+sec_cutoff
+```
+
+Superior Model
+```{r}
+fullperform50
+```
+
+### Comparison of Sensitivity, Specificity, & Accuracy
+
+Original Model
+```{r}
+performance(sec_cutoff)
+```
+
+Superior Model
+```{r}
+performance(fullperform50)
+```
+
+# Summary
+- Overall, our modeling efforts involved creating a base logistic model for displaying an applicants' chances of getting approved for a loan based on their debt to income ratio, race, self employment, marital status, years of education, total monthly income, purchase price of house, credit check, mortgage history, loan amount, loan term, and net worth of applicant. We then assessed alternative models and picked the best model from those and ran it with the full data sample to compare to our original model. We found that the alternative model was more effective in displaying the chances of getting approved for a loan based on the variables chosen.
+- In more detail, we found that both the original and superior models were both are very close in terms of results for the most part. The original model ROC had an AUC of .846 while the superior model was an auc of .844. Sensitivity, specificity, and accuracy values were relatively close as well. Sensitivity was .6196 & .5357, specificity was .9656 & .9743, and accuracy was .9203 & .922 for the original and superior models respectively.
+- In conclusion, the Support Vectors Machine was the best model, in comparison to the original model, in determining the whether an applicant would be accepted or denied for a loan based on their debt to income ratio, race, whether they are self employed, their marital status, and the years of education they have, their monthly income, the purchase price of the house, their credit and mortgage history, the loan amount and term, and their net worth. 
